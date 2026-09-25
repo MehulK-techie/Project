@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LensCraft | Visual Search</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Header & Search UI -->
+  <header class="app-header">
+    <h1>LensCraft</h1>
+    <p class="tagline">Discover high-resolution imagery from across the web.</p>
+    
+    <form id="search-form">
+      <label for="search-input" class="sr-only">Search images</label>
+      <input 
+        id="search-input" 
+        type="search" 
+        placeholder="Type a keyword (e.g., Mountains, Neon, Wildlife)..." 
+        required 
+      />
+      <button id="search-btn" type="submit">Search</button>
+    </form>
+
+    <!-- ORIGINAL FEATURE 1: Category Suggestion Chips -->
+    <div class="category-chips">
+      <button type="button" class="chip">Nature</button>
+      <button type="button" class="chip">Architecture</button>
+      <button type="button" class="chip">Cyberpunk</button>
+      <button type="button" class="chip">Ocean</button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container">
+    <p id="status"></p>
+
+    <!-- ORIGINAL FEATURE 2: Empty-State Message -->
+    <div id="empty-state" class="empty-state">
+      <p>Enter a search topic above or click a category chip to begin.</p>
+    </div>
+
+    <!-- Empty Results Container (Part 2 will dynamically load images here) -->
+    <section id="results"></section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
