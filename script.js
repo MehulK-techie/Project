@@ -6,75 +6,85 @@ const statusText = document.getElementById("status");
 const emptyState = document.getElementById("empty-state");
 const categoryChips = document.querySelectorAll(".chip");
 
-// Core Function: Fetch and Render Images
+// Helper: Display shimmer skeleton placeholders during loading
+function showSkeletons() {
+  resultsContainer.innerHTML = "";
+  for (let i = 0; i < 8; i++) {
+    const skeleton = document.createElement("div");
+    skeleton.className = "skeleton-card";
+    resultsContainer.appendChild(skeleton);
+  }
+}
+
+// Core Fetch Function handling all 4 UI states
 async function executeSearch(query) {
   const trimmedQuery = query.trim();
-  
-  // Requirement: Ignore empty searches
+
+  // Task: Ignore empty searches
   if (!trimmedQuery) return;
 
-  // Clear previous results and hide the initial empty state message
-  resultsContainer.innerHTML = "";
-  if (emptyState) {
-    emptyState.style.display = "none";
-  }
-
-  // Update status message
+  // STATE 2: LOADING — Trigger skeleton cards and status message
+  if (emptyState) emptyState.style.display = "none";
+  statusText.className = "status-message loading";
   statusText.textContent = `Searching for "${trimmedQuery}"...`;
+  showSkeletons();
 
-  // Construct Wikimedia Commons API URL
+  // Construct Wikimedia Commons API Endpoint
   const url =
     "https://commons.wikimedia.org/w/api.php?action=query" +
     "&generator=search&gsrsearch=" + encodeURIComponent(trimmedQuery) +
     "&gsrnamespace=6&gsrlimit=12&prop=imageinfo&iiprop=url&iiurlwidth=300&format=json&origin=*";
 
+  // STATE 4 (Part A): ERROR HANDLING — Wrap network operations in try...catch
   try {
     const response = await fetch(url);
-    
-    // Check if response is OK
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
     const data = await response.json();
 
-    // Check if query pages exist
+    // STATE 4 (Part B): EMPTY STATE — Handle search queries returning 0 items
     if (!data.query || !data.query.pages) {
-      statusText.textContent = `No images found for "${trimmedQuery}". Try another keyword.`;
+      resultsContainer.innerHTML = "";
+      statusText.className = "status-message empty";
+      statusText.textContent = `No results found for "${trimmedQuery}". Try another keyword.`;
       return;
     }
 
     const items = Object.values(data.query.pages);
 
-    // ENHANCEMENT 1: Display result count
+    // STATE 3: RESULTS — Display success banner and result count
+    statusText.className = "status-message success";
     statusText.textContent = `Showing ${items.length} results for "${trimmedQuery}"`;
 
-    // Render image cards into DOM
     renderResults(items);
 
   } catch (error) {
-    console.error("Fetch error:", error);
-    statusText.textContent = "Unable to fetch images. Please try again.";
+    // STATE 4 (Part C): NETWORK/API ERROR STATE
+    console.error("Fetch failure:", error);
+    resultsContainer.innerHTML = "";
+    statusText.className = "status-message error";
+    statusText.textContent = "Something went wrong while fetching images. Please check your network and try again.";
   }
 }
 
-// Function to dynamically build card elements
+// Render Results into Responsive Grid
 function renderResults(items) {
+  resultsContainer.innerHTML = "";
+
   items.forEach((item) => {
-    // Validate imageinfo payload
     if (!item.imageinfo || !item.imageinfo[0]) return;
 
     const imgInfo = item.imageinfo[0];
     const thumbUrl = imgInfo.thumburl || imgInfo.url;
     const fullImageUrl = imgInfo.url;
-    // Strip 'File:' prefix from Wikimedia title
     const title = item.title ? item.title.replace(/^File:/, "") : "Untitled Image";
 
-    // Build Card Article
     const card = document.createElement("article");
-    card.className = "card";
+    card.className = "card fade-in";
 
-    // ENHANCEMENT 2: Make card a clickable link to open full image in a new tab
     const link = document.createElement("a");
     link.href = fullImageUrl;
     link.target = "_blank";
@@ -92,19 +102,16 @@ function renderResults(items) {
     link.appendChild(img);
     link.appendChild(caption);
     card.appendChild(link);
-
-    // Append card to responsive grid container
     resultsContainer.appendChild(card);
   });
 }
 
-// Requirement: Catch search form submit event
+// Event Listeners
 searchForm.addEventListener("submit", (event) => {
-  event.preventDefault(); // Prevent page reload
+  event.preventDefault(); // Stop page reload
   executeSearch(searchInput.value);
 });
 
-// ENHANCEMENT 3: Wire category suggestion chips to execute instant search
 categoryChips.forEach((chip) => {
   chip.addEventListener("click", () => {
     const term = chip.textContent;
